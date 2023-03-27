@@ -1,0 +1,223 @@
+{% extends 'base.html.twig' %}
+{% block javascripts %}
+	<script src="{{ asset('js/feedquery.js') }}"></script>
+{% endblock %}
+
+{% block body %}
+	<header class="bg-dark">
+		<div class="header-container container">
+			<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="FALSE" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav mr-auto ">
+						<li class="nav-item active">
+							<a class="navbar-brand" href="#">Home
+								<span class="sr-only">(current)</span>
+							</a>
+						</li>
+						<li class="nav-item active">
+							<a class="nav-link" href="#">About Us</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#">Contact Us</a>
+						</li>
+					</ul>
+					<form class="form-inline my-2 my-lg-0">
+						<img src={{ userdata.getProfilePic() }} class="navbar-profile-pic">
+						<a href="/logout">
+							<button class="btn btn-outline-danger my-2 my-sm-0" type="submit">Log Out</button>
+						</a>
+					</form>
+				</div>
+			</nav>
+		</div>
+	</header>
+
+	<section class="main">
+		<div class="main-container container flex-just-mid">
+			<div class="post-list-container m-3">
+				<div class="new-post">
+					<div class="new-post-container">
+						<div
+							class="status box">
+							{# <form class="status box" id="status-box-form" method="post" action="/upload"> #}
+							<div class="status-main">
+								<img src={{ userdata.getProfilePic()}} class="status-img">
+								<input type="text" value={{ userdata.getEmail() }} name="userEmail" id="usermailvalue">
+								<textarea id="status-box-form" class="status-textarea" name="post-text" placeholder="Share your mind..."></textarea>
+							</div>
+							<div class="status-actions">
+								<div class="status-menu">
+									<input
+									type="file" id="image" name="image">
+								{# <a class="status-menu-item" href="#">Photos</a> #}
+								</div>
+								<button class="status-share" id="status-share-btn">Share</button>
+							</div>
+						</div>
+						{# {% set itr = 10 %} #}
+						<div class="filter">
+							<button onclick="sortposts()" class="sort-posts m-1">
+								<i class="bi bi-sort-down"></i>Reverse Sort</button>
+						</div>
+						{% set fullcount = 0 %}
+						<ul id="posts-list">
+							{% set cnt = 0 %}
+							{% for post in posts|reverse %}
+								<input type="text" value={{ post.getId() }} name="postdata" class="postdata">
+								{# {% set clickcount = 0 %} #}
+								{# <input type="text" value={{ clickdata }} name="clickdata" name="clickdata"> #}
+								{# <span class="postdata">{{ post.getId() }}</span> #}
+									<li id="posted"> <div
+										class="post box">
+										{# {{cnt}} #}
+										<div class="status-main">
+											<img src={{ post.getUser().getProfilePic() }} class="status-img">
+											<div class="post-detail">
+												<div class="post-title">
+													<strong>{{ post.getUser().getUserName() }}</strong>
+													created new
+													<span>post</span>
+												</div>
+												<div class="post-date">{{ post.getTime().format('F j, Y, g:i a') }}</div>
+											</div>
+											<button class="intro-menu"></button>
+										</div>
+										<div class="post-content">{{ post.text }}
+											<div class="post-photos">
+												{% if post.getImage() %}
+													<img src={{ post.getImage() }} class="post-photo">
+												{% endif %}
+											</div>
+										</div>
+										<div class="post-actions">
+											<a href="#" class="post-action like-action" onclick="morelikeposts({{ cnt }})" id="{{ cnt }}">
+												{% if userdata.getPostsliked().contains(post) %}
+													<svg stroke="currentColor" stroke-width="1" fill="red" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+														<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path>
+													</svg>
+												{% else %}
+													<svg stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+														<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path>
+													</svg>
+												{% endif %}
+												{{ post.getLikes() }}
+											</a>
+											<a href="#" class="post-action comment-icon" onclick="showcomments({{ cnt }})">
+												<svg stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1" viewbox="0 0 24 24">
+													<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path>
+												</svg>
+												{{ post.getComments()|length }}
+											</a>
+										</div>
+										<div class="post-comment">
+											<input type="text" name="comment-input" class="post-comment-input" placeholder="Enter Comment...">
+											<button id="comment-post-btn" class="comment-share" onclick="commentshare({{ cnt }})">Post comment</button>
+										</div>
+										<ul class="comments-section" id="comments-section">
+											{% for comment in post.getComments()|reverse %}
+												<li>
+													<div class="comment box">
+														<div class="status-main" id="comment-main">
+															<img src={{ comment.getUser().getProfilePic()}} class="comment-img">
+															<textarea id="comment-box-form" class="comment-textarea" name="post-text" disabled>{{ comment.getText() }}</textarea>
+														</div>
+													</div>
+												</li>
+											{% endfor %}
+										</ul>
+									</div>
+								</li>
+								{% set cnt = cnt + 1 %}
+								{% set fullcount = fullcount + 1 %}
+							{% endfor %}
+							<div class="posts-loaded" id="posts-loaded"></div>
+							<div class="show-button-container m-1">
+								<button onclick="showMore({{1}})" id="show-more-btn" class="show-more-btn"><strong>Show More</strong></button>
+							</div>
+							{# <a href="/iterator">Show More</a> #}
+						</ul>
+
+
+						<ul id="posts-list-sorted">
+							{% set itr = 0 %}
+							{% for post in posts %}
+								<input type="text" value={{ post.getId() }} name="postdata" class="postdata">
+								{# {% set clickcount = 0 %} #}
+								{# <input type="text" value={{ clickdata }} name="clickdata" name="clickdata"> #}
+								{# <span class="postdata">{{ post.getId() }}</span> #}
+									<li id="posted"> <div class="post box">
+										<div class="status-main">
+											<img src={{ post.getUser().getProfilePic() }} class="status-img">
+											<div class="post-detail">
+												<div class="post-title">
+													<strong>{{ post.getUser().getUserName() }}</strong>
+													created new
+													<span>post</span>
+												</div>
+												<div class="post-date">{{ post.getTime().format('F j, Y, g:i a') }}</div>
+											</div>
+											<button class="intro-menu"></button>
+										</div>
+										<div class="post-content">{{ post.text }}
+											<div class="post-photos">
+												{% if post.getImage() %}
+													<img src={{ post.getImage() }} class="post-photo">
+												{% endif %}
+											</div>
+										</div>
+										<div class="post-actions">
+											<a href="#" class="post-action like-action" onclick="morelikeposts({{ fullcount }})" id="{{ fullcount }}">
+												{% if userdata.getPostsliked().contains(post) %}
+													<svg stroke="currentColor" stroke-width="1" fill="red" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+														<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path>
+													</svg>
+												{% else %}
+													<svg stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" viewbox="0 0 24 24">
+														<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path>
+													</svg>
+												{% endif %}
+												{{ post.getLikes() }}
+											</a>
+											<a href="#" class="post-action comment-icon" onclick="showcomments({{ fullcount }})">
+												<svg stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1" viewbox="0 0 24 24">
+													<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path>
+												</svg>
+												{{ post.getComments()|length }}
+											</a>
+										</div>
+										<div class="post-comment">
+											<input type="text" name="comment-input" class="post-comment-input" placeholder="Enter Comment...">
+											<button id="comment-post-btn" class="comment-share" onclick="commentshare({{ fullcount }})">Post comment</button>
+										</div>
+										<ul class="comments-section" id="comments-section">
+											{% for comment in post.getComments()|reverse %}
+												<li>
+													<div class="comment box">
+														<div class="status-main" id="comment-main">
+															<img src={{ comment.getUser().getProfilePic()}} class="comment-img">
+															<textarea id="comment-box-form" class="comment-textarea" name="post-text" disabled>{{ comment.getText() }}</textarea>
+														</div>
+													</div>
+												</li>
+											{% endfor %}
+										</ul>
+									</div>
+								</li>
+								{% set itr = itr + 1 %}
+								{% set fullcount = fullcount + 1 %}
+							{% endfor %}
+							<div class="posts-loaded" id="posts-loaded-more"></div>
+							<div class="show-button-container m-1">
+								<button onclick="showMore({{0}})" id="show-more-btn-rev" class="show-more-btn"><strong>Show More</strong></button>
+							</div>
+							{# <a href="/iterator">Show More</a> #}
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+{% endblock %}
