@@ -163,7 +163,7 @@ class HomeController extends AbstractController {
 	#[Route('/feed', name: 'app_login')]
 	public function linkedInLogin(EntityManagerInterface $entityManager): Response {
 		if (isset($_POST['loginSubmit'])) {
-			$uservalue = $entityManager->getRepository(User::class)->findOneBy(['email' => $_POST['loginEmail'], 'password' => $_POST['loginPass']]);
+			$uservalue = $entityManager->getRepository(User::class)->findOneBy(['email' => $_POST['loginEmail'], 'password' => md5($_POST['loginPass'])]);
 			if ($uservalue == NULL) {
 				$errorMessage = 'Give correct Email Id';
 				// $si->set('logged', TRUE);
@@ -185,7 +185,7 @@ class HomeController extends AbstractController {
 				$userdata = new User;
 				$userdata->setEmail($_POST['signupEmail']);
 				$userdata->setUserName($_POST['inputName']);
-				$userdata->setPassword($_POST['signUpPass']);
+				$userdata->setPassword(md5($_POST['signUpPass']));
 				$userdata->setProfilePic("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png");
 				$entityManager->persist($userdata);
 				$entityManager->flush();
