@@ -59,7 +59,7 @@ class HomeController extends AbstractController {
 		$endIndex = $request->request->get("endIndex");
 		$startIndex = $endIndex;
 		$endIndex += 10;
-		$postindex = count($entityManager->getRepository(Post::class)->findAll()) - $startIndex;
+		// $postindex = count($entityManager->getRepository(Post::class)->findAll()) - $startIndex;
 		$posts = $entityManager->getRepository(Post::class);
 		$query = $posts->createQueryBuilder('e')
                 ->setFirstResult($startIndex) // Starting from 10th record
@@ -78,7 +78,65 @@ class HomeController extends AbstractController {
 			$commentsval = $element->getComments();
 			$comments = [];
 			foreach ($commentsval as $comment) {
-				$comments = [
+				$comments[] = [
+					'text' => $comment->getText(),
+					'profilepic' => $comment->getUser()->getProfilePic(),
+				];
+			}
+
+			$postsdata[] = [
+				'profilepic' => $element->getUser()->getProfilePic(),
+				'username' => $element->getUser()->getUserName(),
+				'time' => $element->getTime()->format('F j, Y, g:i a'),
+				'posttext' => $element->getText(),
+				'likecondition' => $uservalue->getPostsliked()->contains($element),
+				'likes' => $element->getLikes(),
+				'commentslength' => count($element->getComments()),
+				'comments' => $comments,
+				'id' =>$element->getId(),
+				'picture' =>$element->getImage(),
+			];
+		}
+
+		return new JsonResponse([
+			'startIndex' => $startIndex,
+			'endIndex' => $endIndex,
+			'posts' => $postsdata,
+			'endreached' => $endreached,
+		]);
+	}
+
+	/**
+	 *  Send list of posts as data to ajax to reverse and show to user.
+	 */
+	#[Route('/reverse', name: 'reverse_home')]
+	public function reversesort(Request $request, EntityManagerInterface $entityManager): JsonResponse {
+
+		$startIndex = $request->request->get("startIndex");
+		$endIndex = $request->request->get("endIndex");
+		$postCount = count($entityManager->getRepository(Post::class)->findAll());
+		$posts = $entityManager->getRepository(Post::class);
+		$query = $posts->createQueryBuilder('e')
+                ->setFirstResult(0) // Starting from 10th record
+                ->setMaxResults($endIndex) // Number of records to retrieve
+                ->getQuery();
+
+		$elements = $query->getResult();
+		$uservalue = $entityManager->getRepository(User::class)->findOneBy(['email' => $request->request->get('userEmail')]);
+		$postsdata = [];
+		$endreached = 0;
+		if (count($elements) < 10) {
+			$endreached = 1;
+		}
+		if ($endIndex > $postCount) {
+			$endIndex = $postCount;
+		}
+
+		foreach($elements as $element) {
+			$commentsval = $element->getComments();
+			$comments = [];
+			foreach ($commentsval as $comment) {
+				$comments[] = [
 					'text' => $comment->getText(),
 					'profilepic' => $comment->getUser()->getProfilePic(),
 				];
@@ -214,18 +272,28 @@ class HomeController extends AbstractController {
 		}
 
 		$posts = $entityManager->getRepository(Post::class)->findBy([], ['id' => 'ASC'], 10);
+
+		$noposts = 0;
+		if (count($posts) == 0) {
+			$noposts = 1;
+		}
 		
 		return $this->render('home/feed.html.twig', [
 			'controller_name' => 'HomeController',
 			'userdata' => $userdata,
 			'posts' => $posts,
+			'noposts' => $noposts,
 		]);
 	}
 
+	/**
+	 *  Logs out the user.
+	 */
 	#[Route('/logout', name: 'app_logout')]
 	public function logout(): Response {
 		// $si->remove('logged');
 		// $si->remove('email');
+		print_r("hello");
 		return $this->render('home/index.html.twig', [
 			'controller_name' => 'HomeController',
 			'errormessage' => '',
